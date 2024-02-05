@@ -4,11 +4,12 @@ import torch
 
 # -------------------------------------------------------------------
 class MAML:
-    def __init__(self, model, loss_fn, lr_inner, lr_outer=0.001, adapt_steps=1):
+    def __init__(self, model, loss_fn, lr_inner, lr_outer=0.001, adapt_steps=1, patience=50):
         self.model = model
         self.loss_fn = loss_fn
         self.lr_inner = lr_inner
         self.adapt_steps = adapt_steps
+        self.patience = patience
 
         self.theta = dict(self.model.named_parameters())
         meta_params = list(self.theta.values())
@@ -34,6 +35,11 @@ class MAML:
 
     # -------------------------------------------------------------------
     def fit(self, tgen, steps=10000):
+
+        # Params for early stopping
+        best_loss = float('inf')
+        patience_counter = 0
+
         for step in range(steps):
             tsk = tgen.batch()
 
@@ -47,4 +53,15 @@ class MAML:
 
             if (step + 1) % 50 == 0:
                 print(f"Step: {step + 1}, loss: {loss.item():.5f}", end="\t\r")
+
+            if loss < best_loss:
+                best_loss = loss
+                patience_counter = 0
+            else:
+                patience_counter += 1
+
+            if patience_counter >= self.patience:
+                print(f'Early stopping after {step} steps')
+                break
+
         return self

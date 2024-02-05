@@ -6,11 +6,12 @@ from utils import func_call, DEVICE
 
 # -------------------------------------------------------------------
 class MAMLAug:
-    def __init__(self, model, loss_fn, lr_inner, nb_augs, lr_outer=0.001, adapt_steps=1, with_weights=False):
+    def __init__(self, model, loss_fn, lr_inner, nb_augs, lr_outer=0.001, adapt_steps=1, patience=50, with_weights=False):
         self.model = model
         self.loss_fn = loss_fn
         self.lr_inner = lr_inner
         self.adapt_steps = adapt_steps
+        self.patience = patience
         self.with_weights = with_weights
 
         self.theta = dict(self.model.named_parameters())
@@ -56,6 +57,11 @@ class MAMLAug:
 
     # -------------------------------------------------------------------
     def fit(self, tgen, steps=10000):
+
+        # Params for early stopping
+        best_loss = float('inf')
+        patience_counter = 0
+
         for step in range(steps):
             tsk = tgen.batch()
             tsk = augment_support_set(tsk)
@@ -74,6 +80,16 @@ class MAMLAug:
                     print(f"Step: {step + 1}, loss: {loss.item():.5f}, w: {(min(w_arr), max(w_arr), np.mean(w_arr))}", end="\t\r")
                 else:
                     print(f"Step: {step + 1}, loss: {loss.item():.5f}", end="\t\r")
+
+            if loss < best_loss:
+                best_loss = loss
+                patience_counter = 0
+            else:
+                patience_counter += 1
+
+            if patience_counter >= self.patience:
+                print(f'Early stopping after {step} steps')
+                break
 
         if self.with_weights:
             self.model.weights = self.weights.detach()

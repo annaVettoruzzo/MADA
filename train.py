@@ -49,7 +49,8 @@ def train(args):
     print('MAML')
     model_maml = copy.deepcopy(model).to(DEVICE)
     MAML(model_maml, loss_fn, config_params['lr_inner'],
-         config_params['lr'], config_params['adapt_steps']).fit(tgen, steps=config_params['steps'])
+         config_params['lr'], config_params['adapt_steps'],
+         config_params['patience']).fit(tgen, steps=config_params['steps'])
     torch.save(model_maml.state_dict(), PATH / 'MAML')
     del model_maml
     gc.collect()
@@ -58,7 +59,8 @@ def train(args):
     print('MAML with Augmentations')
     model_mamlaug = copy.deepcopy(model).to(DEVICE)
     MAMLAug(model_mamlaug, loss_fn, config_params['lr_inner'], NB_AUGS,
-            config_params['lr'], config_params['adapt_steps'], with_weights=False).fit(tgen, steps=config_params['steps'])
+            config_params['lr'], config_params['adapt_steps'], config_params['patience'],
+            with_weights=False).fit(tgen, steps=config_params['steps'])
     torch.save(model_mamlaug.state_dict(), PATH / 'MAMLAugTrTs')
     del model_mamlaug
     gc.collect()
@@ -67,7 +69,8 @@ def train(args):
     print('MAML with Augmentations and Weights')
     model_mamlaug_w = copy.deepcopy(model).to(DEVICE)
     MAMLAug(model_mamlaug_w, loss_fn, config_params['lr_inner'], NB_AUGS,
-            config_params['lr'], config_params['adapt_steps'], with_weights=True).fit(tgen, steps=config_params['steps'])
+            config_params['lr'], config_params['adapt_steps'], config_params['patience'],
+            with_weights=True).fit(tgen, steps=config_params['steps'])
     torch.save(model_mamlaug_w.state_dict(), PATH / 'MAMLAugTrTsW')
     torch.save(model_mamlaug_w.weights, PATH / 'MAMLAugTrTsW_weights')
     del model_mamlaug_w
@@ -102,6 +105,8 @@ if __name__ == '__main__':
                         help='Learning rate inner loop')
     parser.add_argument('--lr', type=float, default=1e-3,
                         help='Learning rate')
+    parser.add_argument('--patience', type=float, default=200,
+                        help='Learning rate inner loop')
 
     args = parser.parse_args()
 
