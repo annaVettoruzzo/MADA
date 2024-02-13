@@ -10,7 +10,7 @@ from collections import defaultdict
 
 
 # -------------------------------------------------------------------
-def evaluate_classification_model(tgen, model, name, loss_fn, lr_inner, steps=20, nb_tasks=100, with_aug=False):
+def evaluate_classification_model(tgen, model, loss_fn, lr_inner, steps=20, nb_tasks=100, with_aug=False):
     lst = []
 
     for _ in range(nb_tasks):
@@ -28,7 +28,7 @@ def evaluate_classification_models(tgen, models_dict, loss_fn, lr_inner, steps=2
     for name, model in models_dict.items():
         print(f" {name}", end="")
         with_aug = ("Aug" in name)
-        res = evaluate_classification_model(tgen, model, name, loss_fn, lr_inner, steps=steps, nb_tasks=nb_tasks, with_aug=with_aug)
+        res = evaluate_classification_model(tgen, model, loss_fn, lr_inner, steps=steps, nb_tasks=nb_tasks, with_aug=with_aug)
         results[name] = res
 
     save_object(results, f"{folder}/k{tgen.k}/test_eval.json")
@@ -46,12 +46,12 @@ def load_classification_models(dirpath, model_name, n_classes, n_tot_classes):
 
     if model_name == 'cnn':
         models_dict = {
-            #"scratch": SimpleCNNModule(n_classes).to(DEVICE),
-            #"scratchAug": SimpleCNNModule(n_classes).to(DEVICE),
-            #"MAML": SimpleCNNModule(n_classes).to(DEVICE),
-            #"MAMLAugTs": SimpleCNNModule(n_classes).to(DEVICE),
-            #"MAMLAugTrTs": SimpleCNNModule(n_classes).to(DEVICE),
-            #"MAMLAugTrTsW": SimpleCNNModule(n_classes).to(DEVICE),
+            "scratch": SimpleCNNModule(n_classes).to(DEVICE),
+            "scratchAug": SimpleCNNModule(n_classes).to(DEVICE),
+            "MAML": SimpleCNNModule(n_classes).to(DEVICE),
+            "MAMLAugTs": SimpleCNNModule(n_classes).to(DEVICE),
+            "MAMLAugTrTs": SimpleCNNModule(n_classes).to(DEVICE),
+            "MAMLAugTrTsW": SimpleCNNModule(n_classes).to(DEVICE),
             "TRLearning_onesubject": SimpleCNNModule(n_tot_classes).to(DEVICE),
             "TRLearning": SimpleCNNModule(n_tot_classes).to(DEVICE),
 
@@ -64,6 +64,8 @@ def load_classification_models(dirpath, model_name, n_classes, n_tot_classes):
             "MAMLAugTs": ResNetBaseline(n_classes=n_classes).to(DEVICE),
             "MAMLAugTrTs": ResNetBaseline(n_classes=n_classes).to(DEVICE),
             "MAMLAugTrTsW": ResNetBaseline(n_classes=n_classes).to(DEVICE),
+            "TRLearning_onesubject": SimpleCNNModule(n_tot_classes).to(DEVICE),
+            "TRLearning": SimpleCNNModule(n_tot_classes).to(DEVICE),
         }
 
     delete = []

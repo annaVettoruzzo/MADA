@@ -70,11 +70,11 @@ class ResNetBaseline(nn.Module):
             ResNetBlock(in_channels=mid_channels * 2, out_channels=mid_channels * 2),
 
         ])
-        self.final = nn.Linear(mid_channels * 2, n_classes)
+        self.last = nn.Linear(mid_channels * 2, n_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore
         x = self.layers(x)
-        return self.final(x.mean(dim=-1))
+        return self.last(x.mean(dim=-1))
 
 
 class ResNetBlock(nn.Module):

@@ -31,7 +31,7 @@ def test(args):
     np.random.seed(config_params['seed'])
     random.seed(config_params['seed'])
 
-    PATH = Path(f"results/{config_params['dataset_name']}/seed{config_params['seed']}_{config_params['model']}/k{config_params['k']}")
+    PATH = Path(f"results/{config_params['dataset_name']}/seed{config_params['seed']}/{config_params['model']}/k{config_params['k']}")
     print(PATH)
     PATH.mkdir(parents=True, exist_ok=True)
 
@@ -41,7 +41,7 @@ def test(args):
 
     loss_fn = torch.nn.CrossEntropyLoss()
 
-    folders = [f"results/{config_params['dataset_name']}/seed{seed}_{config_params['model']}" for seed in range(config_params['seeds_done'])]
+    folders = [f"results/{config_params['dataset_name']}/seed{seed}/{config_params['model']}" for seed in range(config_params['seeds_done'])]
 
     dict_avg, dict_std = evaluate_classification_seeds(tgen, folders, config_params['model'],
                                                        loss_fn, config_params['lr_inner'], config_params['n'],

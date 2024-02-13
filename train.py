@@ -2,8 +2,10 @@ import copy
 import gc
 from utils import DEVICE
 from TaskGenerator import TaskGenerator
+from TransferLearningDataset import TLOneSubject, TLTrainingSubjects
+from torch.utils.data import DataLoader
 from models import SimpleCNNModule, ResNetBaseline
-from methods import MAMLAug, MAML
+from methods import MAMLAug, MAML, model_training
 from augmentations import NB_AUGS
 
 import torch, random
@@ -19,7 +21,7 @@ def train(args):
     config_params = vars(args)
 
     # For saving models
-    PATH = Path(f"results/{config_params['dataset_name']}/seed{config_params['seed']}_{config_params['model']}")
+    PATH = Path(f"results/{config_params['dataset_name']}/seed{config_params['seed']}/{config_params['model']}")
     print(PATH)
     PATH.mkdir(parents=True, exist_ok=True)
 
@@ -49,8 +51,7 @@ def train(args):
     print('MAML')
     model_maml = copy.deepcopy(model).to(DEVICE)
     MAML(model_maml, loss_fn, config_params['lr_inner'],
-         config_params['lr'], config_params['adapt_steps'],
-         config_params['patience']).fit(tgen, steps=config_params['steps'])
+         config_params['lr'], config_params['adapt_steps']).fit(tgen, steps=config_params['steps'])
     torch.save(model_maml.state_dict(), PATH / 'MAML')
     del model_maml
     gc.collect()
@@ -59,8 +60,7 @@ def train(args):
     print('MAML with Augmentations')
     model_mamlaug = copy.deepcopy(model).to(DEVICE)
     MAMLAug(model_mamlaug, loss_fn, config_params['lr_inner'], NB_AUGS,
-            config_params['lr'], config_params['adapt_steps'], config_params['patience'],
-            with_weights=False).fit(tgen, steps=config_params['steps'])
+            config_params['lr'], config_params['adapt_steps'], with_weights=False).fit(tgen, steps=config_params['steps'])
     torch.save(model_mamlaug.state_dict(), PATH / 'MAMLAugTrTs')
     del model_mamlaug
     gc.collect()
@@ -69,11 +69,30 @@ def train(args):
     print('MAML with Augmentations and Weights')
     model_mamlaug_w = copy.deepcopy(model).to(DEVICE)
     MAMLAug(model_mamlaug_w, loss_fn, config_params['lr_inner'], NB_AUGS,
-            config_params['lr'], config_params['adapt_steps'], config_params['patience'],
-            with_weights=True).fit(tgen, steps=config_params['steps'])
+            config_params['lr'], config_params['adapt_steps'], with_weights=True).fit(tgen, steps=config_params['steps'])
     torch.save(model_mamlaug_w.state_dict(), PATH / 'MAMLAugTrTsW')
     torch.save(model_mamlaug_w.weights, PATH / 'MAMLAugTrTsW_weights')
     del model_mamlaug_w
+    gc.collect()
+
+    # TRANSFER LEARNING with one subject
+    print('Transfer Learning with one subject')
+    dataset = TLOneSubject(tgen)  # Randomly select one subject and create a dataset
+    dataloader = DataLoader(dataset, batch_size=25, shuffle=True)
+    model_trlearning = SimpleCNNModule(n_classes=len(dataset.classes)).to(DEVICE) if config_params['model'] == 'cnn' else ResNetBaseline(n_classes=len(dataset.classes)).to(DEVICE)
+    model_trlearning = model_training(dataloader, model_trlearning, loss_fn, config_params['lr'], config_params['steps'])
+    torch.save(model_trlearning.state_dict(), PATH / 'TRLearning_onesubject')
+    del model_trlearning
+    gc.collect()
+
+    # TRANSFER LEARNING with all training subjects
+    print('Transfer Learning with all training subjects')
+    dataset = TLTrainingSubjects(tgen)
+    dataloader = DataLoader(dataset, batch_size=25, shuffle=True)
+    model_trlearning = SimpleCNNModule(n_classes=len(dataset.classes)).to(DEVICE) if config_params['model'] == 'cnn' else ResNetBaseline(n_classes=len(dataset.classes)).to(DEVICE)
+    model_trlearning = model_training(dataloader, model_trlearning, loss_fn, config_params['lr'], config_params['steps'])
+    torch.save(model_trlearning.state_dict(), PATH / 'TRLearning')
+    del model_trlearning
     gc.collect()
 
 
@@ -105,8 +124,6 @@ if __name__ == '__main__':
                         help='Learning rate inner loop')
     parser.add_argument('--lr', type=float, default=1e-3,
                         help='Learning rate')
-    parser.add_argument('--patience', type=float, default=200,
-                        help='Learning rate inner loop')
 
     args = parser.parse_args()
 
