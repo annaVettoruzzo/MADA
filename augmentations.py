@@ -23,7 +23,6 @@ transformations = [
     AddNoise(scale=(8.0, 9.0)),
     AddNoise(scale=(9.0, 10.0)),
 
-    Convolve(window=["hann", "triang", "hamming", "cosine"], size=(1, 3)),
     Convolve(window=["hann", "triang", "hamming", "cosine"], size=(3, 5)),
     Convolve(window=["hann", "triang", "hamming", "cosine"], size=(5, 7)),
     Convolve(window=["hann", "triang", "hamming", "cosine"], size=(7, 10)),
@@ -32,6 +31,7 @@ transformations = [
     Convolve(window=["hann", "triang", "hamming", "cosine"], size=(20, 25)),
     Convolve(window=["hann", "triang", "hamming", "cosine"], size=(25, 30)),
     Convolve(window=["hann", "triang", "hamming", "cosine"], size=(30, 35)),
+    Convolve(window=["hann", "triang", "hamming", "cosine"], size=(35, 40)),
 
     Drift(max_drift=(0.00001, 0.0001), n_drift_points=[2, 3, 4]),
     Drift(max_drift=(0.0001, 0.001), n_drift_points=[2, 3, 4]),

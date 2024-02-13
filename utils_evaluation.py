@@ -1,4 +1,5 @@
 from methods.metatest import adapt_and_evaluate
+from methods import create_pretrained_model
 from models import SimpleCNNModule, ResNetBaseline
 from utils import DEVICE, save_object
 
@@ -6,11 +7,10 @@ import torch
 import numpy as np
 from pathlib import Path
 from collections import defaultdict
-import json
 
 
 # -------------------------------------------------------------------
-def evaluate_classification_model(tgen, model, loss_fn, lr_inner, steps=20, nb_tasks=100, with_aug=False):
+def evaluate_classification_model(tgen, model, name, loss_fn, lr_inner, steps=20, nb_tasks=100, with_aug=False):
     lst = []
 
     for _ in range(nb_tasks):
@@ -28,7 +28,7 @@ def evaluate_classification_models(tgen, models_dict, loss_fn, lr_inner, steps=2
     for name, model in models_dict.items():
         print(f" {name}", end="")
         with_aug = ("Aug" in name)
-        res = evaluate_classification_model(tgen, model, loss_fn, lr_inner, steps=steps, nb_tasks=nb_tasks, with_aug=with_aug)
+        res = evaluate_classification_model(tgen, model, name, loss_fn, lr_inner, steps=steps, nb_tasks=nb_tasks, with_aug=with_aug)
         results[name] = res
 
     save_object(results, f"{folder}/k{tgen.k}/test_eval.json")
@@ -37,17 +37,24 @@ def evaluate_classification_models(tgen, models_dict, loss_fn, lr_inner, steps=2
 
 
 # -------------------------------------------------------------------
-def load_classification_models(dirpath, model_name, n_classes):
+def load_classification_models(dirpath, model_name, n_classes, n_tot_classes):
     PATH = Path(dirpath)
+
+    # Calculate number of classes used for pretraining
+    params = torch.load(PATH / "TRLearning", map_location=DEVICE)
+    n_tot_classes = params['last.weight'].shape[0]
 
     if model_name == 'cnn':
         models_dict = {
-            "scratch": SimpleCNNModule(n_classes).to(DEVICE),
-            "scratchAug": SimpleCNNModule(n_classes).to(DEVICE),
-            "MAML": SimpleCNNModule(n_classes).to(DEVICE),
-            "MAMLAugTs": SimpleCNNModule(n_classes).to(DEVICE),
-            "MAMLAugTrTs": SimpleCNNModule(n_classes).to(DEVICE),
-            "MAMLAugTrTsW": SimpleCNNModule(n_classes).to(DEVICE),
+            #"scratch": SimpleCNNModule(n_classes).to(DEVICE),
+            #"scratchAug": SimpleCNNModule(n_classes).to(DEVICE),
+            #"MAML": SimpleCNNModule(n_classes).to(DEVICE),
+            #"MAMLAugTs": SimpleCNNModule(n_classes).to(DEVICE),
+            #"MAMLAugTrTs": SimpleCNNModule(n_classes).to(DEVICE),
+            #"MAMLAugTrTsW": SimpleCNNModule(n_classes).to(DEVICE),
+            "TRLearning_onesubject": SimpleCNNModule(n_tot_classes).to(DEVICE),
+            "TRLearning": SimpleCNNModule(n_tot_classes).to(DEVICE),
+
         }
     elif model_name == 'resnet':
         models_dict = {
@@ -65,6 +72,9 @@ def load_classification_models(dirpath, model_name, n_classes):
             alt_name = name.split("Aug")[0] if name == "scratchAug" or name == "MAMLAugTs" else name
             params = torch.load(PATH / alt_name, map_location=DEVICE)
             model.load_state_dict(params)
+
+            if "TRLearning" in name:
+                model = create_pretrained_model(model, n_classes)
 
             if "W" in name:
                 model.weights = (torch.load(PATH / (name + "_weights"), map_location=DEVICE))
@@ -84,7 +94,7 @@ def evaluate_classification_seeds(tgen, folders, model_name, loss_fn, lr_inner, 
 
     for dirpath in folders:
         print(f"\nEvaluating {dirpath}: ", end="")
-        models_dict = load_classification_models(dirpath, model_name, n_classes)
+        models_dict = load_classification_models(dirpath, model_name, n_classes, len(tgen.classes))
         results = evaluate_classification_models(tgen, models_dict, loss_fn, lr_inner, steps=steps, nb_tasks=nb_tasks, folder=dirpath)
         for k, v in results.items():
             final_results[k].append(v)
