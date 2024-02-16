@@ -10,8 +10,9 @@ def model_training(dataloader, model, loss_fn, lr, steps):
     step = dataloader.batch_size
     for epoch in range(n_epochs):
         for input, label in dataloader:
+            label = label.to(DEVICE).long()
             output = model(input)
-            loss = loss_fn(output, label.to(DEVICE))
+            loss = loss_fn(output, label)
 
             optimizer.zero_grad()
             loss.backward()

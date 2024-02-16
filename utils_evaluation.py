@@ -37,10 +37,12 @@ def evaluate_classification_models(tgen, models_dict, loss_fn, lr_inner, steps=2
 
 
 # -------------------------------------------------------------------
-def load_classification_models(dirpath, model_name, n_classes, n_tot_classes):
+def load_classification_models(dirpath, model_name, n_classes):
     PATH = Path(dirpath)
 
     # Calculate number of classes used for pretraining
+    params_onesubject = torch.load(PATH / "TRLearning_onesubject", map_location=DEVICE)
+    n_tot_classes_onesubject = params_onesubject['last.weight'].shape[0]
     params = torch.load(PATH / "TRLearning", map_location=DEVICE)
     n_tot_classes = params['last.weight'].shape[0]
 
@@ -52,7 +54,7 @@ def load_classification_models(dirpath, model_name, n_classes, n_tot_classes):
             "MAMLAugTs": SimpleCNNModule(n_classes).to(DEVICE),
             "MAMLAugTrTs": SimpleCNNModule(n_classes).to(DEVICE),
             "MAMLAugTrTsW": SimpleCNNModule(n_classes).to(DEVICE),
-            "TRLearning_onesubject": SimpleCNNModule(n_tot_classes).to(DEVICE),
+            "TRLearning_onesubject": SimpleCNNModule(n_tot_classes_onesubject).to(DEVICE),
             "TRLearning": SimpleCNNModule(n_tot_classes).to(DEVICE),
 
         }
@@ -64,7 +66,7 @@ def load_classification_models(dirpath, model_name, n_classes, n_tot_classes):
             "MAMLAugTs": ResNetBaseline(n_classes=n_classes).to(DEVICE),
             "MAMLAugTrTs": ResNetBaseline(n_classes=n_classes).to(DEVICE),
             "MAMLAugTrTsW": ResNetBaseline(n_classes=n_classes).to(DEVICE),
-            "TRLearning_onesubject": SimpleCNNModule(n_tot_classes).to(DEVICE),
+            "TRLearning_onesubject": SimpleCNNModule(n_tot_classes_onesubject).to(DEVICE),
             "TRLearning": SimpleCNNModule(n_tot_classes).to(DEVICE),
         }
 
@@ -96,7 +98,7 @@ def evaluate_classification_seeds(tgen, folders, model_name, loss_fn, lr_inner, 
 
     for dirpath in folders:
         print(f"\nEvaluating {dirpath}: ", end="")
-        models_dict = load_classification_models(dirpath, model_name, n_classes, len(tgen.classes))
+        models_dict = load_classification_models(dirpath, model_name, n_classes)
         results = evaluate_classification_models(tgen, models_dict, loss_fn, lr_inner, steps=steps, nb_tasks=nb_tasks, folder=dirpath)
         for k, v in results.items():
             final_results[k].append(v)

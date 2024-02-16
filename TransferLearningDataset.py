@@ -13,7 +13,10 @@ class TLOneSubject(Dataset):
         # Randomly select one subject
         self.person = random.choice(tgen.persons)
 
-        self.data_dict = {c: tgen.data[self.person][c] for c in self.classes}
+        classes_j = list(set(self.classes).intersection(set(tgen.data[self.person].keys())))
+        if self.classes != classes_j:
+            self.classes = classes_j
+        self.data_dict = {i: tgen.data[self.person][c] for i, c in enumerate(self.classes)}
 
         self.data = []
         for c, data in self.data_dict.items():
@@ -37,14 +40,16 @@ class TLTrainingSubjects(Dataset):
 
         self.persons = tgen.persons
 
-        self.data_dict = {}
+        data_dict_tmp = {}
         for p in self.persons:
-            for c in self.classes:
-                if c in self.data_dict.keys():
-                    self.data_dict[c] = torch.cat((self.data_dict[c], torch.from_numpy(tgen.data[p][c])))
+            classes_p = list(set(self.classes).intersection(set(tgen.data[p].keys())))
+            for c in classes_p:
+                if c in data_dict_tmp.keys():
+                    data_dict_tmp[c] = torch.cat((data_dict_tmp[c], torch.from_numpy(tgen.data[p][c])))
                 else:
-                    self.data_dict[c] = torch.from_numpy(tgen.data[p][c])
+                    data_dict_tmp[c] = torch.from_numpy(tgen.data[p][c])
 
+        self.data_dict = {i: v for i, (k, v) in enumerate(data_dict_tmp.items())}
         self.data = []
         for c, data in self.data_dict.items():
             for d in data:
