@@ -31,7 +31,9 @@ def evaluate_classification_models(tgen, models_dict, loss_fn, lr_inner, steps=2
         res = evaluate_classification_model(tgen, model, loss_fn, lr_inner, steps=steps, nb_tasks=nb_tasks, with_aug=with_aug)
         results[name] = res
 
-    save_object(results, f"{folder}/k{tgen.k}/test_eval.json")
+    savedir = Path(f"folder/k{tgen.k}")
+    savedir.mkdir(parents=True, exist_ok=True)
+    save_object(results, savedir / "test_eval.json")
 
     return results
 

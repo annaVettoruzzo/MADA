@@ -19,7 +19,7 @@ def save_results(dict_avg, dict_std, save_dir):
     with open(save_dir/'result.csv', "w") as f:
         f.write("{:<15}, {:<12}, {:<12}\n".format("Method", "Avg accuracy", "Std accuracy"))
         for name in dict_avg.keys():
-            f.write("{:<15}, {:<12.2f}, {:<12.2f}\n".format(name, avg[name], std[name]))
+            f.write("{:<15}, {:<12.2f}, {:<12.2f}\n".format(name, 100*avg[name], 100*std[name]))
     return
 
 
@@ -31,7 +31,7 @@ def test(args):
     np.random.seed(config_params['seed'])
     random.seed(config_params['seed'])
 
-    PATH = Path(f"results/{config_params['dataset_name']}/seed{config_params['seed']}/{config_params['model']}/k{config_params['k']}")
+    PATH = Path(f"results/{config_params['dataset_name']}/{config_params['model']}/k{config_params['k']}")
     print(PATH)
     PATH.mkdir(parents=True, exist_ok=True)
 
@@ -41,7 +41,7 @@ def test(args):
 
     loss_fn = torch.nn.CrossEntropyLoss()
 
-    folders = [f"results/{config_params['dataset_name']}/seed{seed}/{config_params['model']}" for seed in range(config_params['seeds_done'])]
+    folders = [f"results/{config_params['dataset_name']}/{config_params['model']}/seed{seed}" for seed in range(config_params['seeds_done'])]
 
     dict_avg, dict_std = evaluate_classification_seeds(tgen, folders, config_params['model'],
                                                        loss_fn, config_params['lr_inner'], config_params['n'],
@@ -56,11 +56,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Meta-Learning for Time-series data with Augmentations')
     parser.add_argument('--seed', type=int, default=0,
                         help='Random seed')
-    parser.add_argument('--seeds_done', type=int, default=1,
+    parser.add_argument('--seeds_done', type=int, default=4,
                         help='Seeds used for training')
 
     # Set dataset params
-    parser.add_argument('--dataset_name', type=str, default='DSA',
+    parser.add_argument('--dataset_name', type=str, default='PAMAP',
                         choices=['ADL', 'DSA', 'PAMAP', 'REALDISP-ideal', 'REALDISP-mutual', 'REALDISP-self', 'VPA', 'WISDM-phone', 'WISDM-watch'],
                         help='Dataset name')
     parser.add_argument('--n', type=int, default=5,
@@ -77,7 +77,7 @@ if __name__ == '__main__':
                         help='Number of steps per task')
     parser.add_argument('--lr_inner', type=float, default=1e-2,
                         help='Learning rate inner loop')
-    parser.add_argument('--nb_test_tasks', type=int, default=100,
+    parser.add_argument('--nb_test_tasks', type=int, default=50,
                         help='Number of tasks to test')
 
     args = parser.parse_args()
