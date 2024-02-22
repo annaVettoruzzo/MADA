@@ -59,11 +59,11 @@ class TaskGenerator:
         # Randomly select k support examples and q query examples from each of the selected classes
         X_sp, y_sp, X_qr, y_qr = [], [], [], []
         for c in classes:
-            images = random.sample(list(dico[c]), len(dico[c]))
-            Xc_sp = images[:self.k]
+            examples = random.sample(list(dico[c]), len(dico[c]))
+            Xc_sp = examples[:self.k]
             X_sp += Xc_sp
             y_sp += [label_map[c] for _ in Xc_sp]
-            Xc_qr = images[self.k:self.k + self.q]
+            Xc_qr = examples[self.k:self.k + self.q]
             X_qr += Xc_qr
             y_qr += [label_map[c] for _ in Xc_qr]
 

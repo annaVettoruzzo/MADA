@@ -21,7 +21,7 @@ def train(args):
     config_params = vars(args)
 
     # For saving models
-    PATH = Path(f"results/{config_params['dataset_name']}/seed{config_params['seed']}/{config_params['model']}")
+    PATH = Path(f"results/{config_params['dataset_name']}/{config_params['model']}/seed{config_params['seed']}_prova")
     print(PATH)
     PATH.mkdir(parents=True, exist_ok=True)
 
@@ -109,9 +109,9 @@ if __name__ == '__main__':
     parser.add_argument('--n', type=int, default=5,
                         help='Number of classes per task')
     parser.add_argument('--k', type=int, default=1,
-                        help='Number of images per class in support set')  # k=1 always because we want to consider only 1s
+                        help='Number of examples per class in support set')  # k=1 always because we want to consider only 1s
     parser.add_argument('--q', type=int, default=100,
-                        help='Number of images per class in query set')
+                        help='Number of examples per class in query set')
 
     # Set training params
     parser.add_argument('--model', type=str, default='cnn',
