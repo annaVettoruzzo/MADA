@@ -5,7 +5,7 @@ from TaskGenerator import TaskGenerator
 from TransferLearningDataset import TLOneSubject, TLTrainingSubjects
 from torch.utils.data import DataLoader
 from models import SimpleCNNModule, ResNetBaseline
-from methods import MAMLAug, MAML, model_training
+from methods import MAMLAug, ANILAug, MAML, model_training
 from augmentations import NB_AUGS
 
 import torch, random
@@ -21,9 +21,12 @@ def train(args):
     config_params = vars(args)
 
     # For saving models
-    PATH = Path(f"results/{config_params['dataset_name']}/{config_params['model']}/seed{config_params['seed']}_prova")
+    PATH = Path(f"results/{config_params['dataset_name']}/{config_params['model']}/seed{config_params['seed']}")
     print(PATH)
     PATH.mkdir(parents=True, exist_ok=True)
+
+    print(DEVICE)
+    print(torch.cuda.current_device())
 
     torch.random.manual_seed(config_params['seed'])
     np.random.seed(config_params['seed'])
@@ -46,6 +49,26 @@ def train(args):
     # SCRATCH
     print('SCRATCH')
     torch.save(model.state_dict(), PATH / "scratch")
+    
+    # TRANSFER LEARNING with one subject
+    print('Transfer Learning with one subject')
+    dataset = TLOneSubject(tgen)  # Randomly select one subject and create a dataset
+    dataloader = DataLoader(dataset, batch_size=25, shuffle=True)
+    model_trlearning = SimpleCNNModule(n_classes=len(dataset.classes)).to(DEVICE) if config_params['model'] == 'cnn' else ResNetBaseline(n_classes=len(dataset.classes)).to(DEVICE)
+    model_trlearning = model_training(dataloader, model_trlearning, loss_fn, config_params['lr'], config_params['steps'])
+    torch.save(model_trlearning.state_dict(), PATH / 'TRLearning_onesubject')
+    del model_trlearning
+    gc.collect()
+
+    # TRANSFER LEARNING with all training subjects
+    print('Transfer Learning with all training subjects')
+    dataset = TLTrainingSubjects(tgen)
+    dataloader = DataLoader(dataset, batch_size=25, shuffle=True)
+    model_trlearning = SimpleCNNModule(n_classes=len(dataset.classes)).to(DEVICE) if config_params['model'] == 'cnn' else ResNetBaseline(n_classes=len(dataset.classes)).to(DEVICE)
+    model_trlearning = model_training(dataloader, model_trlearning, loss_fn, config_params['lr'], config_params['steps'])
+    torch.save(model_trlearning.state_dict(), PATH / 'TRLearning')
+    del model_trlearning
+    gc.collect()
 
     # MAML
     print('MAML')
@@ -75,26 +98,45 @@ def train(args):
     del model_mamlaug_w
     gc.collect()
 
-    # TRANSFER LEARNING with one subject
-    print('Transfer Learning with one subject')
-    dataset = TLOneSubject(tgen)  # Randomly select one subject and create a dataset
-    dataloader = DataLoader(dataset, batch_size=25, shuffle=True)
-    model_trlearning = SimpleCNNModule(n_classes=len(dataset.classes)).to(DEVICE) if config_params['model'] == 'cnn' else ResNetBaseline(n_classes=len(dataset.classes)).to(DEVICE)
-    model_trlearning = model_training(dataloader, model_trlearning, loss_fn, config_params['lr'], config_params['steps'])
-    torch.save(model_trlearning.state_dict(), PATH / 'TRLearning_onesubject')
-    del model_trlearning
+    """ De-comment if ANIL
+    # ANILAUG at TR and TS (last two layers)
+    print('ANIL with Augmentations')
+    model_anilaug = copy.deepcopy(model).to(DEVICE)
+    ANILAug(model_anilaug, loss_fn, config_params['lr_inner'], NB_AUGS,
+            config_params['lr'], config_params['adapt_steps'], anil_last=False, with_weights=False).fit(tgen, steps=config_params['steps'])
+    torch.save(model_anilaug.state_dict(), PATH / 'ANILAugTrTs')
+    del model_anilaug
     gc.collect()
 
-    # TRANSFER LEARNING with all training subjects
-    print('Transfer Learning with all training subjects')
-    dataset = TLTrainingSubjects(tgen)
-    dataloader = DataLoader(dataset, batch_size=25, shuffle=True)
-    model_trlearning = SimpleCNNModule(n_classes=len(dataset.classes)).to(DEVICE) if config_params['model'] == 'cnn' else ResNetBaseline(n_classes=len(dataset.classes)).to(DEVICE)
-    model_trlearning = model_training(dataloader, model_trlearning, loss_fn, config_params['lr'], config_params['steps'])
-    torch.save(model_trlearning.state_dict(), PATH / 'TRLearning')
-    del model_trlearning
+    # ANILAUG with WEIGHTS (last two layers)
+    print('ANIL with Augmentations and Weights')
+    model_anilaug_w = copy.deepcopy(model).to(DEVICE)
+    ANILAug(model_anilaug_w, loss_fn, config_params['lr_inner'], NB_AUGS,
+            config_params['lr'], config_params['adapt_steps'], anil_last=False, with_weights=True).fit(tgen, steps=config_params['steps'])
+    torch.save(model_anilaug_w.state_dict(), PATH / 'ANILAugTrTsW')
+    torch.save(model_anilaug_w.weights, PATH / 'ANILAugTrTsW_weights')
+    del model_anilaug_w
     gc.collect()
 
+    # ANILAUG at TR and TS (last layer)
+    print('ANIL with Augmentations')
+    model_anilaug = copy.deepcopy(model).to(DEVICE)
+    ANILAug(model_anilaug, loss_fn, config_params['lr_inner'], NB_AUGS,
+            config_params['lr'], config_params['adapt_steps'], anil_last=True, with_weights=False).fit(tgen, steps=config_params['steps'])
+    torch.save(model_anilaug.state_dict(), PATH / 'ANILAugTrTs_last')
+    del model_anilaug
+    gc.collect()
+
+    # ANILAUG with WEIGHTS (last layer)
+    print('ANIL with Augmentations and Weights')
+    model_anilaug_w = copy.deepcopy(model).to(DEVICE)
+    ANILAug(model_anilaug_w, loss_fn, config_params['lr_inner'], NB_AUGS,
+            config_params['lr'], config_params['adapt_steps'], anil_last=True, with_weights=True).fit(tgen, steps=config_params['steps'])
+    torch.save(model_anilaug_w.state_dict(), PATH / 'ANILAugTrTsW_last')
+    torch.save(model_anilaug_w.weights, PATH / 'ANILAugTrTsW_last_weights')
+    del model_anilaug_w
+    gc.collect()
+    """
 
 if __name__ == '__main__':
     # Set parameters
