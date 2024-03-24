@@ -8,13 +8,16 @@
 /tsne_plots.ipynb
 /Untitled.ipynb
 /check_noise.ipynb
-/data/
+/data/raw/
+/data/preprocessed_old
 /.ipynb_checkpoints/
 /.idea/
-!/data/preprocessed/ADL_HMP_Dataset/dataprocessing.ipynb
-!/data/preprocessed/Daily and Sports Activities Data Set/dataprocessing.ipynb
-!/data/preprocessed/PAMAP2/dataprocessing.ipynb
-!/data/preprocessed/REALDISP/dataprocessing.ipynb
-!/data/preprocessed/Vicon Physical Action Data Set/dataprocessing.ipynb
-!/data/preprocessed/WISDM/dataprocessing.ipynb
-!/data/preprocessed/WISDM/dataprocessing2.ipynb
+/data/preprocessed/ADL_HMP_Dataset/data.pickle
+/data/preprocessed/Daily and Sports Activities Data Set/data.pickle
+/data/preprocessed/PAMAP2/data.pickle
+/data/preprocessed/REALDISP/data_ideal.pickle
+/data/preprocessed/REALDISP/data_mutual.pickle
+/data/preprocessed/REALDISP/data_self.pickle
+/data/preprocessed/Vicon Physical Action Data Set/data.pickle
+/data/preprocessed/WISDM/data_accel_phone.pickle
+/data/preprocessed/WISDM/data_accel_watch.pickle
