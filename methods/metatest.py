@@ -5,17 +5,24 @@ from TaskGenerator import augment_support_set
 
 
 # -------------------------------------------------------------------
-def adapt_and_evaluate(model, loss_fn, lr_inner, tsk, steps=20, with_aug=False):
+def adapt_and_evaluate(model, loss_fn, lr_inner, tsk, steps=20, anil=False, anil_last=False, with_aug=False):
     cmodel = copy.deepcopy(model).to(DEVICE)
 
     if with_aug:
         tsk = augment_support_set(tsk)
 
-    optimizer = torch.optim.SGD(cmodel.parameters(), lr_inner)
+    if anil and anil_last:
+        optim_params = {name: value for name, value in dict(cmodel.named_parameters()).items() if 'last' in name}# or 'dense_block2' in name}
+    elif anil and not anil_last:
+        optim_params = {name: value for name, value in dict(cmodel.named_parameters()).items() if 'last' in name or 'dense_block2' in name}
+    else:
+        optim_params = dict(cmodel.named_parameters())
+
+    optimizer = torch.optim.SGD(list(optim_params.values()), lr_inner)
     history = defaultdict(list)
 
     for step in range(steps + 1):
-        y_sp_pred, y_qr_pred = func_call(cmodel, None, tsk)
+        y_sp_pred, y_qr_pred = func_call(cmodel, optim_params, tsk)
 
         # Evaluate current model on the test data
         acc = accuracy(y_qr_pred, tsk.y_qr)
