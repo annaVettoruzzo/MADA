@@ -1,5 +1,12 @@
 /results/
+/results_old/
+/augmentations_old.py
 /note_baselines.txt
-/plots.ipynb
-/data/raw/
+/plots_old.ipynb
+/plots_results.ipynb
+/plots_weights.ipynb
+/tsne_plots.ipynb
+/Untitled.ipynb
+/check_noise.ipynb
 /data/
+/.ipynb_checkpoints
