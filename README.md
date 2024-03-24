@@ -18,8 +18,10 @@ labeled samples from completely new subjects undertaking entirely new activities
  * VPA - Vicon Physical Action dataset
  * WISDM - Smartphone and Smartwatch Activity and Biometrics dataset
  * REALDISP - Activity Recognition dataset
+   
 Data can be downloaded from the [ UCI Machine Learning
-Repository]([https://www.google.com](https://archive.ics.uci.edu/).
+Repository]([https://archive.ics.uci.edu/]).
+
 The code for preprocessing the data is in /data/*dataset_name*/preprocessing.ipynb.
 
 
