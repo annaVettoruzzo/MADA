@@ -10,7 +10,8 @@
 /check_noise.ipynb
 /data/
 /.ipynb_checkpoints/
-/.idea/!/data/preprocessed/ADL_HMP_Dataset/dataprocessing.ipynb
+/.idea/
+!/data/preprocessed/ADL_HMP_Dataset/dataprocessing.ipynb
 !/data/preprocessed/Daily and Sports Activities Data Set/dataprocessing.ipynb
 !/data/preprocessed/PAMAP2/dataprocessing.ipynb
 !/data/preprocessed/REALDISP/dataprocessing.ipynb
