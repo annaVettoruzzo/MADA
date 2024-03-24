@@ -1,4 +1,5 @@
-**MADA Meta-Learning Automatic Data Augmentation**
+#**MADA Meta-Learning Automatic Data Augmentation** 
+
 Code for the paper "Efficient Few-Shot Human Activity Recognition via Meta-Learning
 and Data Augmentation" currently under review.
 
