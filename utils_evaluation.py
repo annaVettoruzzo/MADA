@@ -10,12 +10,12 @@ from collections import defaultdict
 
 
 # -------------------------------------------------------------------
-def evaluate_classification_model(tgen, model, loss_fn, lr_inner, steps=20, nb_tasks=100, with_aug=False):
+def evaluate_classification_model(tgen, model, loss_fn, lr_inner, steps=20, nb_tasks=100, anil=False, anil_last=False, with_aug=False):
     lst = []
 
     for _ in range(nb_tasks):
         tsk = tgen.batch()
-        history = adapt_and_evaluate(model, loss_fn, lr_inner, tsk, steps=steps, with_aug=with_aug)
+        history = adapt_and_evaluate(model, loss_fn, lr_inner, tsk, steps=steps, anil=anil, anil_last=anil_last, with_aug=with_aug)
         lst.append(history["acc"])
 
     return np.array(lst).mean(axis=0)
@@ -28,12 +28,14 @@ def evaluate_classification_models(tgen, models_dict, loss_fn, lr_inner, steps=2
     for name, model in models_dict.items():
         print(f" {name}", end="")
         with_aug = ("Aug" in name)
-        res = evaluate_classification_model(tgen, model, loss_fn, lr_inner, steps=steps, nb_tasks=nb_tasks, with_aug=with_aug)
+        anil = ("ANIL" in name)
+        anil_last = ("ANIL" in name and "last" in name)
+        res = evaluate_classification_model(tgen, model, loss_fn, lr_inner, steps=steps, nb_tasks=nb_tasks, anil=anil, anil_last=anil_last, with_aug=with_aug)
         results[name] = res
 
-    savedir = Path(f"folder/k{tgen.k}")
+    savedir = Path(f"{folder}/k{tgen.k}")
     savedir.mkdir(parents=True, exist_ok=True)
-    save_object(results, savedir / "test_eval.json")
+    save_object(results, savedir / "test_eval_anil.json")
 
     return results
 
@@ -58,6 +60,10 @@ def load_classification_models(dirpath, model_name, n_classes):
             "MAMLAugTrTsW": SimpleCNNModule(n_classes).to(DEVICE),
             "TRLearning_onesubject": SimpleCNNModule(n_tot_classes_onesubject).to(DEVICE),
             "TRLearning": SimpleCNNModule(n_tot_classes).to(DEVICE),
+            #"ANILAugTrTs": SimpleCNNModule(n_classes).to(DEVICE),
+            #"ANILAugTrTsW": SimpleCNNModule(n_classes).to(DEVICE),
+            #"ANILAugTrTs_last": SimpleCNNModule(n_classes).to(DEVICE),
+            #"ANILAugTrTsW_last": SimpleCNNModule(n_classes).to(DEVICE),
 
         }
     elif model_name == 'resnet':
@@ -68,8 +74,8 @@ def load_classification_models(dirpath, model_name, n_classes):
             "MAMLAugTs": ResNetBaseline(n_classes=n_classes).to(DEVICE),
             "MAMLAugTrTs": ResNetBaseline(n_classes=n_classes).to(DEVICE),
             "MAMLAugTrTsW": ResNetBaseline(n_classes=n_classes).to(DEVICE),
-            "TRLearning_onesubject": SimpleCNNModule(n_tot_classes_onesubject).to(DEVICE),
-            "TRLearning": SimpleCNNModule(n_tot_classes).to(DEVICE),
+            "TRLearning_onesubject": ResNetBaseline(n_classes=n_tot_classes_onesubject).to(DEVICE),
+            "TRLearning": ResNetBaseline(n_classes=n_tot_classes).to(DEVICE),
         }
 
     delete = []

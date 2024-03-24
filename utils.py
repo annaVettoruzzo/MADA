@@ -33,9 +33,15 @@ def accuracy(pred, y_true):
 
 # -------------------------------------------------------------------
 def func_call(model, params_dict, tsk):
-    if params_dict is None: params_dict = dict(model.named_parameters())
+    if params_dict is None:
+        new_params_dict = dict(model.named_parameters())
+    elif len(list(model.parameters())) != len(params_dict):
+        new_params_dict = dict(model.named_parameters()).copy()
+        new_params_dict.update(params_dict)
+    else:
+        new_params_dict = params_dict
     X = torch.cat((tsk.X_sp, tsk.X_qr))
-    y = functional_call(model, params_dict, X)
+    y = functional_call(model, new_params_dict, X)
     return y[:len(tsk.X_sp)], y[len(tsk.X_sp):]
 
 
